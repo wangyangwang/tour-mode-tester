@@ -1,22 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCP Tester (Port 8990)</title>
+    <title>Tour Mode TCP Tester</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: monospace;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
-        .container { display: grid; gap: 20px; }
+
+        .container {
+            display: grid;
+            gap: 20px;
+        }
+
         .panel {
             border: 1px solid #ccc;
             padding: 15px;
             border-radius: 4px;
         }
+
         .logs {
             height: 300px;
             overflow-y: auto;
@@ -24,17 +31,33 @@
             padding: 10px;
             font-family: monospace;
         }
-        .error { color: red; }
-        .success { color: green; }
-        button, select { padding: 8px; margin: 5px; }
+
+        .command {
+            color: blue;
+        }
+
+        .ack {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            font-family: monospace;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="panel">
-            <h2>Connection (Port 8990)</h2>
+            <h2>Tour Mode TCP Tester (Port 8990)</h2>
             <div>
-                <input type="text" id="host" value="localhost" placeholder="Host">
+                <input type="text" id="host" value="localhost">
                 <button onclick="connect()">Connect</button>
                 <button onclick="disconnect()">Disconnect</button>
             </div>
@@ -42,20 +65,17 @@
         </div>
 
         <div class="panel">
-            <h2>Commands</h2>
+            <h2>Send Command</h2>
             <div>
-                <select id="command">
-                    <option value="tour_start">Start Tour</option>
-                    <option value="tour_end">End Tour</option>
-                    <option value="tour_advance">Advance Tour</option>
-                    <option value="tour_previous">Previous Tour</option>
-                </select>
-                <button onclick="sendCommand()">Send Command</button>
+                <button onclick="sendCommand('tour_start')">tour_start</button>
+                <button onclick="sendCommand('tour_end')">tour_end</button>
+                <button onclick="sendCommand('tour_advance')">tour_advance</button>
+                <button onclick="sendCommand('tour_previous')">tour_previous</button>
             </div>
         </div>
 
         <div class="panel">
-            <h2>Logs</h2>
+            <h2>Command Log</h2>
             <div class="logs" id="logs"></div>
         </div>
     </div>
@@ -78,14 +98,14 @@
                 const response = await fetch('/api/connect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ host, port: 8990 })
+                    body: JSON.stringify({ host })
                 });
-                
+
                 const data = await response.json();
                 if (data.status === 'connected') {
                     isConnected = true;
                     document.getElementById('status').textContent = 'Connected';
-                    addLog('Connected to TCP server', 'success');
+                    addLog('Connected to TCP server');
                 }
             } catch (error) {
                 addLog(`Connection error: ${error.message}`, 'error');
@@ -103,26 +123,31 @@
             }
         }
 
-        async function sendCommand() {
+        async function sendCommand(command) {
             if (!isConnected) {
                 addLog('Not connected to server', 'error');
                 return;
             }
 
-            const command = document.getElementById('command').value;
             try {
                 const response = await fetch('/api/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ command })
                 });
-                
+
                 const data = await response.json();
-                addLog(`Sent: ${command}`, 'success');
+                if (data.status === 'success') {
+                    addLog(`Sent: ${command}`, 'command');
+                    addLog(`Expecting: ${data.expectedAck}`, 'ack');
+                } else {
+                    addLog(data.message, 'error');
+                }
             } catch (error) {
                 addLog(`Send error: ${error.message}`, 'error');
             }
         }
     </script>
 </body>
+
 </html>
