@@ -1,0 +1,23 @@
+{
+    "name": "tour-mode-tester",
+    "version": "1.0.0",
+    "description": "TCP tester for tour mode presentation controls",
+    "main": "tour_mode_tester.js",
+    "type": "module",
+    "scripts": {
+      "start": "node tour_mode_tester.js",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+      "tcp",
+      "tester",
+      "presentation",
+      "tour-mode"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "express": "^4.18.2",
+      "net": "^1.0.2"
+    }
+  }

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCP Tester (Port 8990)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container { display: grid; gap: 20px; }
+        .panel {
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .logs {
+            height: 300px;
+            overflow-y: auto;
+            background: #f5f5f5;
+            padding: 10px;
+            font-family: monospace;
+        }
+        .error { color: red; }
+        .success { color: green; }
+        button, select { padding: 8px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <h2>Connection (Port 8990)</h2>
+            <div>
+                <input type="text" id="host" value="localhost" placeholder="Host">
+                <button onclick="connect()">Connect</button>
+                <button onclick="disconnect()">Disconnect</button>
+            </div>
+            <div>Status: <span id="status">Disconnected</span></div>
+        </div>
+
+        <div class="panel">
+            <h2>Commands</h2>
+            <div>
+                <select id="command">
+                    <option value="tour_start">Start Tour</option>
+                    <option value="tour_end">End Tour</option>
+                    <option value="tour_advance">Advance Tour</option>
+                    <option value="tour_previous">Previous Tour</option>
+                </select>
+                <button onclick="sendCommand()">Send Command</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Logs</h2>
+            <div class="logs" id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        let isConnected = false;
+
+        function addLog(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = type;
+            entry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            logs.appendChild(entry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        async function connect() {
+            const host = document.getElementById('host').value;
+            try {
+                const response = await fetch('/api/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ host, port: 8990 })
+                });
+                
+                const data = await response.json();
+                if (data.status === 'connected') {
+                    isConnected = true;
+                    document.getElementById('status').textContent = 'Connected';
+                    addLog('Connected to TCP server', 'success');
+                }
+            } catch (error) {
+                addLog(`Connection error: ${error.message}`, 'error');
+            }
+        }
+
+        async function disconnect() {
+            try {
+                await fetch('/api/disconnect', { method: 'POST' });
+                isConnected = false;
+                document.getElementById('status').textContent = 'Disconnected';
+                addLog('Disconnected from server');
+            } catch (error) {
+                addLog(`Disconnect error: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendCommand() {
+            if (!isConnected) {
+                addLog('Not connected to server', 'error');
+                return;
+            }
+
+            const command = document.getElementById('command').value;
+            try {
+                const response = await fetch('/api/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command })
+                });
+                
+                const data = await response.json();
+                addLog(`Sent: ${command}`, 'success');
+            } catch (error) {
+                addLog(`Send error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
